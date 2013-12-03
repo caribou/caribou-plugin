@@ -18,25 +18,25 @@
   "initialize all the plugins"
   [state config]
   (let [updated-config (reduce #(plugin/update-config %2 %) config state)
-        plugins (map #(apply-config % updated-config) state)]
+        plugins (map #(plugin/apply-config % updated-config) state)]
     (caribou/with-caribou updated-config
       (doseq [plugin plugins]
-        (migrate plugin config)))
+        (plugin/migrate plugin config)))
     ;; this map is the plugin-map referenced below
     {:config updated-config
      :plugins plugins
-     :helpers (reduce merge (map provide-helpers plugins))
-     :handlers (reduce merge (map provide-handlers plugins))
-     :pages (reduce merge (map provide-pages plugins))}))
+     :helpers (reduce merge (map plugin/provide-helpers plugins))
+     :handlers (reduce merge (map plugin/provide-handlers plugins))
+     :pages (reduce merge (map plugin/provide-pages plugins))}))
 
 ;; this uses the plugin map as returned from init
 (defn omni-handler
   "construct one big handler, for when their relative order is unimportant"
   [plugin-map]
-  (apply comp (values (:handlers plugin-map))))
+  (apply comp (vals (:handlers plugin-map))))
 
 ;; this uses the plugin map as returned from init
 (defn all-pages
   "construct one big page map structure out of the individual contributions"
   [plugin-map]
-  (apply concat (values (:pages plugin-map))))
+  (apply concat (vals (:pages plugin-map))))
