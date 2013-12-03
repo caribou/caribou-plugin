@@ -2,6 +2,7 @@
   (:refer-clojure :exclusions [new])
   (:require [caribou.plugin.protocol :as plugin]
             [caribou.hooks :as hooks]
+            [caribou.migration :as migration]
             [caribou.core :as caribou]
             [caribou.model :as model]))
 
@@ -22,7 +23,10 @@
         plugins (map #(plugin/apply-config % updated-config) state)]
     (caribou/with-caribou updated-config
       (doseq [plugin plugins]
-        (plugin/migrate plugin config)
+        (doseq [{name :name migration :migration rollback :rollback
+                 :as migration-data} (plugin/migrate plugin config)]
+          (when migration
+            (migration/migrate name migration rollback)))
         (doseq [[model time key action
                  :as hook] (plugin/provide-hooks plugin updated-config)]
           (hooks/add-hook model time key action))))

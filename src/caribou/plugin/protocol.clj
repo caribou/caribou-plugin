@@ -6,7 +6,7 @@
   (apply-config [this config]
     "A function the receives the final config and returns a replacement object.")
   (migrate [this config]
-    "Runs your migration on the database in config.")
+    "Runs your migrations and rollbacks on the database in config.")
   (provide-hooks [this config]
     "Returns the hooks your plugin requires on models.")
   (provide-helpers [this]
@@ -21,7 +21,7 @@
   CaribouPlugin
   {:update-config (fn [this config] config)
    :apply-config (fn [this config] this)
-   :migrate (fn [this config] nil)
+   :migrate (fn [this config] [{:name nil :migration nil :rollback nil}])
    :provide-hooks (fn [this config] {})
    :provide-helpers (fn [this] [])
    :provide-handlers (fn [this] {})
