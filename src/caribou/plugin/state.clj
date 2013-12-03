@@ -22,17 +22,20 @@
     (caribou/with-caribou updated-config
       (doseq [plugin plugins]
         (migrate plugin config)))
-    ;; the object returned is the plugin-map referenced below
-    {:plugins plugins
+    ;; this map is the plugin-map referenced below
+    {:config updated-config
+     :plugins plugins
      :helpers (reduce merge (map provide-helpers plugins))
      :handlers (reduce merge (map provide-handlers plugins))
      :pages (reduce merge (map provide-pages plugins))}))
 
+;; this uses the plugin map as returned from init
 (defn omni-handler
   "construct one big handler, for when their relative order is unimportant"
   [plugin-map]
   (apply comp (values (:handlers plugin-map))))
 
+;; this uses the plugin map as returned from init
 (defn all-pages
   "construct one big page map structure out of the individual contributions"
   [plugin-map]
