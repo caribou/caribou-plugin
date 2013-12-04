@@ -59,7 +59,7 @@
   "Initialize all the plugins."
   [state config]
   (let [updated-config (update-config config state)
-        plugins (apply-config config state)]
+        plugins (apply-config updated-config state)]
     (migrate updated-config plugins)
     (add-hooks updated-config plugins)
     ;; this map is the plugin-map referenced below
