@@ -16,8 +16,9 @@
   (provide-pages [this config]
     "Returns a nested page structure inside a map."))
 
-;;; the identity implementation of each method on the protocol
-(extend java.lang.Object
+;;; The identity implementation of each method on the protocol,
+;;; so you need only implement the ones reflecting the features you need.
+(extend clojure.lang.IRecord
   CaribouPlugin
   {:update-config (fn [this config] config)
    :apply-config (fn [this config] this)
