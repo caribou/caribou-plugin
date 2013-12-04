@@ -4,7 +4,7 @@
   (update-config [this config]
     "A function that returns an updated config map.")
   (apply-config [this config]
-    "A function the receives the final config and returns a replacement object.")
+    "A function that receives the final config and returns a replacement.")
   (migrate [this config]
     "Runs your migrations and rollbacks on the database in config.")
   (provide-hooks [this config]

@@ -23,11 +23,13 @@
 
 (defn apply-config
   [config state]
-  (map #(plugin/apply-config % updated-config) state))
+  ;(map #(or (plugin/apply-config % config) %) state)
+  state)
 
 (defn migrate
   [config plugins]
-  (caribou/with-caribou updated-config
+  (caribou/with-caribou config
+    (model/init)
     (doseq [plugin plugins]
       (doseq [{name :name migration :migration rollback :rollback
                :as migration-data} (plugin/migrate plugin config)]
@@ -39,7 +41,7 @@
   (caribou/with-caribou config
     (doseq [plugin plugins]
       (doseq [[model time key action
-               :as hook] (plugin/provide-hooks plugin updated-config)]
+               :as hook] (plugin/provide-hooks plugin config)]
         (hooks/add-hook model time key action)))))
 
 (defn get-helpers
@@ -51,11 +53,11 @@
   (reduce merge (map plugin/provide-handlers plugins)))
 
 (defn get-pages
-  [plugins]
-  (reduce merge (map plugin/provide-pages plugins)))
+  [plugins config]
+  (reduce merge (map plugin/provide-pages plugins config)))
 
 (defn init
-  "initialize all the plugins"
+  "Initialize all the plugins."
   [state config]
   (let [updated-config (update-config config state)
         plugins (apply-config config state)]
@@ -66,16 +68,16 @@
      :plugins plugins
      :helpers (get-helpers plugins)
      :handlers (get-handlers plugins)
-     :pages (get-pages plugins)}))
+     :pages (get-pages plugins updated-config)}))
 
 ;; this uses the plugin map as returned from init
 (defn omni-handler
-  "construct one big handler, for when their relative order is unimportant"
+  "Construct one \"big handler\", for when their relative order is unimportant."
   [plugin-map]
   (apply comp (vals (:handlers plugin-map))))
 
 ;; this uses the plugin map as returned from init
 (defn all-pages
-  "construct one big page map structure out of the individual contributions"
+  "Construct one big page map structure out of the individual contributions."
   [plugin-map]
   (apply concat (vals (:pages plugin-map))))
