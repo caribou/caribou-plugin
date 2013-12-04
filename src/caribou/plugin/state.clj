@@ -23,7 +23,7 @@
 
 (defn apply-config
   [config state]
-  ;(map #(or (plugin/apply-config % config) %) state)
+  (map #(or (plugin/apply-config % config) %) state)
   state)
 
 (defn migrate
