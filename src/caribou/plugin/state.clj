@@ -3,6 +3,7 @@
   (:require [caribou.plugin.protocol :as plugin]
             [caribou.hooks :as hooks]
             [caribou.migration :as migration]
+            [caribou.db :as db]
             [caribou.core :as caribou]
             [caribou.model :as model]))
 
@@ -16,26 +17,56 @@
   [state plugin]
   (conj state plugin))
 
+(defn update-config
+  [config state]
+  (reduce #(plugin/update-config %2 %) config state))
+
+(defn apply-config
+  [config state]
+  (map #(plugin/apply-config % updated-config) state))
+
+(defn migrate
+  [config plugins]
+  (caribou/with-caribou updated-config
+    (doseq [plugin plugins]
+      (doseq [{name :name migration :migration rollback :rollback
+               :as migration-data} (plugin/migrate plugin config)]
+        (when (and  migration name (empty? (migration/get-migration name)))
+            (migration/migrate name migration rollback))))))
+
+(defn add-hooks
+  [config plugins]
+  (caribou/with-caribou config
+    (doseq [plugin plugins]
+      (doseq [[model time key action
+               :as hook] (plugin/provide-hooks plugin updated-config)]
+        (hooks/add-hook model time key action)))))
+
+(defn get-helpers
+  [plugins]
+  (reduce merge (map plugin/provide-helpers plugins)))
+
+(defn get-handlers
+  [plugins]
+  (reduce merge (map plugin/provide-handlers plugins)))
+
+(defn get-pages
+  [plugins]
+  (reduce merge (map plugin/provide-pages plugins)))
+
 (defn init
   "initialize all the plugins"
   [state config]
-  (let [updated-config (reduce #(plugin/update-config %2 %) config state)
-        plugins (map #(plugin/apply-config % updated-config) state)]
-    (caribou/with-caribou updated-config
-      (doseq [plugin plugins]
-        (doseq [{name :name migration :migration rollback :rollback
-                 :as migration-data} (plugin/migrate plugin config)]
-          (when migration
-            (migration/migrate name migration rollback)))
-        (doseq [[model time key action
-                 :as hook] (plugin/provide-hooks plugin updated-config)]
-          (hooks/add-hook model time key action))))
+  (let [updated-config (update-config config state)
+        plugins (apply-config config state)]
+    (migrate updated-config plugins)
+    (add-hooks updated-config plugins)
     ;; this map is the plugin-map referenced below
     {:config updated-config
      :plugins plugins
-     :helpers (reduce merge (map plugin/provide-helpers plugins))
-     :handlers (reduce merge (map plugin/provide-handlers plugins))
-     :pages (reduce merge (map plugin/provide-pages plugins))}))
+     :helpers (get-helpers plugins)
+     :handlers (get-handlers plugins)
+     :pages (get-pages plugins)}))
 
 ;; this uses the plugin map as returned from init
 (defn omni-handler
