@@ -8,24 +8,27 @@
             [caribou.model :as model]))
 
 (defn new
-  "create a new plugin state"
+  "Create a new plugin state."
   []
   [])
 
 (defn register
-  "register a new plugin with this state"
+  "Register a new plugin with this state."
   [state plugin]
   (conj state plugin))
 
 (defn update-config
+  "Give each plugin a chance to update the config map."
   [config state]
   (reduce #(plugin/update-config %2 %) config state))
 
 (defn apply-config
+  "Give each plugin a chance to return a configured replacement for itself."
   [config state]
   (map #(or (plugin/apply-config % config) %) state))
 
 (defn migrate
+  "Migrate each of the plugins for each migration that is not yet registered."
   [config plugins]
   (caribou/with-caribou config
     (model/init)
@@ -36,6 +39,7 @@
             (migration/migrate name migration rollback))))))
 
 (defn add-hooks
+  "Gather all the hooks provided by plugins and add them to the models."
   [config plugins]
   (caribou/with-caribou config
     (doseq [plugin plugins]
