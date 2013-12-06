@@ -18,12 +18,24 @@
 
 ;;; The identity implementation of each method on the protocol,
 ;;; so you need only implement the ones reflecting the features you need.
-(extend clojure.lang.IRecord
-  CaribouPlugin
+
+(def null-implementation
   {:update-config (fn [this config] config)
    :apply-config (fn [this config] this)
    :migrate (fn [this config] [{:name nil :migration nil :rollback nil}])
    :provide-hooks (fn [this config] {})
    :provide-helpers (fn [this] [])
    :provide-handlers (fn [this] {})
-   :provide-pages (fn [this] {})})
+   :provide-pages (fn [this config] {})})
+
+(comment
+  (extend java.lang.Object
+    CaribouPlugin
+    (assoc null-implementation
+      :migrate (fn [this config] (println "no migration for object") []))))
+
+(defn make
+  [type impl]
+  (extend type
+    CaribouPlugin
+    (merge null-implementation impl)))
