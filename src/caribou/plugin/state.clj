@@ -84,7 +84,7 @@
 (defn omni-handler
   "Construct one \"big handler\", for when their relative order is unimportant."
   [plugin-map]
-  (let [handlers (vals (:handlers plugin-map))]  
+  (let [handlers (vals (:handlers plugin-map))]
     (apply comp handlers)))
 
 (defn provide-handler
