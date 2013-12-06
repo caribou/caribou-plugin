@@ -63,7 +63,8 @@
   "Initialize all the plugins."
   [state config]
   (let [updated-config (update-config config state)
-        plugins (apply-config updated-config state)]
+        plugins (apply-config updated-config state)
+        pages (get-pages plugins updated-config)]
     (migrate updated-config plugins)
     (add-hooks updated-config plugins)
     ;; this map is the plugin-map referenced below
@@ -71,13 +72,19 @@
      :plugins plugins
      :helpers (get-helpers plugins)
      :handlers (get-handlers plugins)
-     :pages (get-pages plugins updated-config)}))
+     :pages pages}))
 
 ;; this uses the plugin map as returned from init
 (defn omni-handler
   "Construct one \"big handler\", for when their relative order is unimportant."
   [plugin-map]
-  (apply comp (vals (:handlers plugin-map))))
+  (let [helpers (:helpers plugin-map)
+        inject-helpers (fn inject-helpers [handler]
+                         (fn helpers-injected [request]
+                           (handler (merge request helpers))))
+        handlers (vals (:handlers plugin-map))
+        all-handlers (concat handlers [inject-helpers])]
+    (apply comp all-handlers)))
 
 ;; this uses the plugin map as returned from init
 (defn all-pages
