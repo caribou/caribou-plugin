@@ -49,11 +49,17 @@
 
 (defn get-helpers
   [plugins]
-  (reduce merge (map plugin/provide-helpers plugins)))
+  (reduce merge {} (map plugin/provide-helpers plugins)))
 
 (defn get-handlers
   [plugins]
-  (reduce merge (map plugin/provide-handlers plugins)))
+  (let [helpers (get-helpers plugins)
+        inject-helpers (fn inject-helpers [handler]
+                         (fn helpers-injected [request]
+                           (handler (merge request helpers))))]
+    (reduce merge
+            {:inject-helpers inject-helpers}
+            (map plugin/provide-handlers plugins))))
 
 (defn get-pages
   [plugins config]
@@ -78,13 +84,22 @@
 (defn omni-handler
   "Construct one \"big handler\", for when their relative order is unimportant."
   [plugin-map]
-  (let [helpers (:helpers plugin-map)
-        inject-helpers (fn inject-helpers [handler]
-                         (fn helpers-injected [request]
-                           (handler (merge request helpers))))
-        handlers (vals (:handlers plugin-map))
-        all-handlers (concat handlers [inject-helpers])]
-    (apply comp all-handlers)))
+  (let [handlers (vals (:handlers plugin-map))]  
+    (apply comp handlers)))
+
+(defn provide-handler
+  "Convenience to extract a handler in a middleware."
+  [base-handler plugin-handlers keyname args]
+  {:pre [(or (contains? plugin-handlers keyname)
+             (println "Did not find" keyname "in" (keys plugin-handlers)))]}
+  (apply (get plugin-handlers keyname) base-handler args))
+
+(defn provider
+  "Convenience function to thread handlers into your middleware."
+  [handler-map]
+  (println "available handlers:" (keys handler-map))
+  (fn [handler key-wanted & args]
+    (provide-handler handler handler-map key-wanted args)))
 
 ;; this uses the plugin map as returned from init
 (defn all-pages

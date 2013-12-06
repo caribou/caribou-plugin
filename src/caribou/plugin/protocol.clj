@@ -24,7 +24,7 @@
    :apply-config (fn [this config] this)
    :migrate (fn [this config] [{:name nil :migration nil :rollback nil}])
    :provide-hooks (fn [this config] {})
-   :provide-helpers (fn [this] [])
+   :provide-helpers (fn [this] {})
    :provide-handlers (fn [this] {})
    :provide-pages (fn [this config] {})})
 
