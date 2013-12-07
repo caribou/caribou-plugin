@@ -80,6 +80,12 @@
      :handlers (get-handlers plugins)
      :pages pages}))
 
+(defn run-all
+  "Creates a vector of the futures for running each plugin."
+  [plugins config]
+  ;; mapv since it is eager, and we want all results
+  (mapv #(future (plugin/run % config)) plugins))
+
 ;; this uses the plugin map as returned from init
 (defn omni-handler
   "Construct one \"big handler\", for when their relative order is unimportant."
