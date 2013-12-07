@@ -14,7 +14,9 @@
   (provide-handlers [this]
     "Returns a map of keyword to ring request handler.")
   (provide-pages [this config]
-    "Returns a nested page structure inside a map."))
+    "Returns a nested page structure inside a map.")
+  (run [this config]
+    "Run this plugin, should return a handle that can access the process."))
 
 ;;; The identity implementation of each method on the protocol,
 ;;; so you need only implement the ones reflecting the features you need.
@@ -26,7 +28,8 @@
    :provide-hooks (fn [this config] {})
    :provide-helpers (fn [this] {})
    :provide-handlers (fn [this] {})
-   :provide-pages (fn [this config] {})})
+   :provide-pages (fn [this config] {})
+   :run (constantly nil)})
 
 (comment
   (extend java.lang.Object
