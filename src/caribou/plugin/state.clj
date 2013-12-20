@@ -67,11 +67,11 @@
 
 (defn init
   "Initialize all the plugins."
-  [state config]
+  [state config & [migrate?]]
   (let [updated-config (update-config config state)
         plugins (apply-config updated-config state)
         pages (get-pages plugins updated-config)]
-    (migrate updated-config plugins)
+    (when migrate (migrate updated-config plugins))
     (add-hooks updated-config plugins)
     ;; this map is the plugin-map referenced below
     {:config updated-config
