@@ -48,18 +48,18 @@
         (hooks/add-hook model time key action)))))
 
 (defn get-helpers
-  [plugins]
-  (reduce merge {} (map plugin/provide-helpers plugins)))
+  [config plugins]
+  (reduce merge {} (map #(plugin/provide-helpers % config) plugins)))
 
 (defn get-handlers
-  [plugins]
-  (let [helpers (get-helpers plugins)
+  [config plugins]
+  (let [helpers (get-helpers config plugins)
         inject-helpers (fn inject-helpers [handler]
                          (fn helpers-injected [request]
                            (handler (merge request helpers))))]
     (reduce merge
             {:inject-helpers inject-helpers}
-            (map plugin/provide-handlers plugins))))
+            (map #(plugin/provide-handlers % config) plugins))))
 
 (defn get-pages
   [plugins config]
@@ -76,8 +76,8 @@
     ;; this map is the plugin-map referenced below
     {:config updated-config
      :plugins plugins
-     :helpers (get-helpers plugins)
-     :handlers (get-handlers plugins)
+     :helpers (get-helpers updated-config plugins)
+     :handlers (get-handlers updated-config plugins)
      :pages pages}))
 
 (defn run-all
