@@ -14,7 +14,7 @@
   (provide-handlers [this config]
     "Returns a map of keyword to ring request handler.")
   (provide-pages [this config]
-    "Returns a nested page structure inside a map.")
+    "Returns a nested page structure inside a map. Each page should provide its controller as a string.")
   (run [this config]
     "Run this plugin, should return a handle that can access the process."))
 

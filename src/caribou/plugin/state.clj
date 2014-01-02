@@ -1,11 +1,13 @@
 (ns caribou.plugin.state
   (:refer-clojure :exclusions [new])
-  (:require [caribou.plugin.protocol :as plugin]
+  (:require [clojure.string :as string]
+            [caribou.plugin.protocol :as plugin]
             [caribou.hooks :as hooks]
             [caribou.migration :as migration]
             [caribou.db :as db]
             [caribou.core :as caribou]
-            [caribou.model :as model]))
+            [caribou.model :as model]
+            [caribou.app.pages :as pages]))
 
 (defn new
   "Create a new plugin state."
@@ -79,6 +81,37 @@
      :helpers (get-helpers updated-config plugins)
      :handlers (get-handlers updated-config plugins)
      :pages pages}))
+
+(defn unparse
+  "Unpack a var or a string/symbol for a var into the legacy format needed
+   by a not-yet-upgraded caribou-frontend."
+  [controller-var]
+  (let [v-name (str controller-var)
+        decomposed (re-matches #"(#')?(.*)" v-name)
+        var-name (last decomposed)
+        analyzed (string/split var-name #"\.")
+        controller-ns (string/join \. (butlast analyzed))
+        [controller action] (string/split (last analyzed) #"/")]
+    [controller-ns controller action]))
+
+(defn load-pages!
+  "Each plugin is expected to provide some nest of pages. The :controller value
+   for the page should be the var holding the function that renders that page."
+  [plugins config]
+  (caribou/with-caribou
+    config
+    (doseq [plugin plugins
+            pages (vals (plugin/provide-pages plugin config))
+            page pages]
+      (let [[controller-ns controller action :as parts]
+            (unparse (:controller page))]
+        (println "LOADING" (pr-str page)
+                 (pr-str [controller-ns controller action]))
+        (when (every? seq parts)
+          (pages/add-page-routes [(assoc page
+                                    :controller controller
+                                    :action action)]
+                                 controller-ns))))))
 
 (defn run-all
   "Creates a vector of the futures for running each plugin."
