@@ -94,24 +94,30 @@
         [controller action] (string/split (last analyzed) #"/")]
     [controller-ns controller action]))
 
-(defn load-pages!
-  "Each plugin is expected to provide some nest of pages. The :controller value
-   for the page should be the var holding the function that renders that page."
-  [plugins config]
-  (caribou/with-caribou
-    config
-    (doseq [plugin plugins
-            pages (vals (plugin/provide-pages plugin config))
-            page pages]
-      (let [[controller-ns controller action :as parts]
-            (unparse (:controller page))]
-        (println "LOADING" (pr-str page)
-                 (pr-str [controller-ns controller action]))
+(defn insert-route!
+  "Support for the legacy imperative / stateful CMS centric route definition
+   API."
+  [page]
+  (let [[controller-ns controller action :as parts]
+        (unparse (:controller page))]
+        (println "LOADING"
+                 (pr-str [controller-ns controller action])
+                 (pr-str page))
         (when (every? seq parts)
           (pages/add-page-routes [(assoc page
                                     :controller controller
                                     :action action)]
-                                 controller-ns))))))
+                                 controller-ns))))
+
+(defn load-pages!
+  "Each plugin is expected to provide some nest of pages. The :controller value
+   for the page should be the var holding the function that renders that page."
+  [page-map config]
+  (caribou/with-caribou
+    config
+    (doseq [pages (vals page-map)
+            page pages]
+      (insert-route! page))))
 
 (defn run-all
   "Creates a vector of the futures for running each plugin."
