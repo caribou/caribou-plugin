@@ -132,3 +132,13 @@
   "Construct one big page map structure out of the individual contributions."
   [plugin-map]
   (apply concat (vals (:pages plugin-map))))
+
+(defn all-routes
+  "Construct the newer version of the Caribou data based routes from plugins."
+  [plugin-map]
+  (for [[name pages] (:pages plugin-map)
+        page pages]
+    [(:path page)
+     (keyword (:controller page))
+     {(:method page :ALL) (:action page)}
+     ()]))
