@@ -94,36 +94,17 @@
         [controller action] (string/split (last analyzed) #"/")]
     [controller-ns controller action]))
 
-(defn insert-route!
-  "Support for the legacy imperative / stateful CMS centric route definition
-   API."
-  [page]
-  (let [[controller-ns controller action :as parts]
-        (unparse (:controller page))]
-        (println "LOADING"
-                 (pr-str [controller-ns controller action])
-                 (pr-str page))
-        (when (every? seq parts)
-          (pages/add-page-routes [(assoc page
-                                    :controller controller
-                                    :action action)]
-                                 controller-ns))))
-
-(defn load-pages!
-  "Each plugin is expected to provide some nest of pages. The :controller value
-   for the page should be the var holding the function that renders that page."
-  [page-map config]
-  (caribou/with-caribou
-    config
-    (doseq [pages (vals page-map)
-            page pages]
-      (insert-route! page))))
-
 (defn run-all
   "Creates a vector of the futures for running each plugin."
   [plugins config]
   ;; mapv since it is eager, and we want all results
-  (mapv #(future (plugin/run % config)) plugins))
+  (mapv (juxt identity #(future (plugin/run % config))) plugins))
+
+(defn stop-all
+  "Takes a sequence of instance / run pairs, and stops each run."
+  [all]
+  (doseq [[instance running] all]
+    (plugin/stop instance running)))
 
 ;; this uses the plugin map as returned from init
 (defn omni-handler

@@ -16,7 +16,9 @@
   (provide-pages [this config]
     "Returns a nested page structure inside a map. Each page should provide its controller as a string.")
   (run [this config]
-    "Run this plugin, should return a handle that can access the process."))
+    "Run this plugin, should return a handle that can access the process.")
+  (stop [this instance]
+    "Stop a running instance, should take a result from \"run\" as an arg"))
 
 ;;; The identity implementation of each method on the protocol,
 ;;; so you need only implement the ones reflecting the features you need.
@@ -29,7 +31,8 @@
    :provide-helpers (fn [this config] {})
    :provide-handlers (fn [this config] {})
    :provide-pages (fn [this config] {})
-   :run (constantly nil)})
+   :run (fn [this config] nil)
+   :stop (fn [this instance] nil)})
 
 (comment
   (extend java.lang.Object
